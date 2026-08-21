@@ -9,7 +9,7 @@ module.exports = {
       {
         id: randomUUID(),
         name: 'Air Jordan 1 Retro High - Chicago',
-        price: 220.0,
+        price: 22000.0,
         total_stock: 10,
         available_stock: 10,
         sold_count: 0,
@@ -20,7 +20,7 @@ module.exports = {
       {
         id: randomUUID(),
         name: 'Nike Dunk Low - Panda',
-        price: 130.0,
+        price: 13000.0,
         total_stock: 5,
         available_stock: 5,
         sold_count: 0,
@@ -31,7 +31,7 @@ module.exports = {
       {
         id: randomUUID(),
         name: 'Yeezy Boost 350 V2 - Zebra',
-        price: 260.0,
+        price: 26000.0,
         total_stock: 1,
         available_stock: 1,
         sold_count: 0,
