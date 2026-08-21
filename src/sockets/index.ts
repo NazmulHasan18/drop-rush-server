@@ -50,7 +50,8 @@ export const emitStockUpdate = (payload: {
   totalStock: number;
   soldCount: number;
 }) => {
-  getIO().emit(SOCKET_EVENTS.STOCK_UPDATE, payload);
+  if (!io) return;
+  io.emit(SOCKET_EVENTS.STOCK_UPDATE, payload);
 };
 
 export const emitReservationExpired = (payload: {
@@ -58,16 +59,19 @@ export const emitReservationExpired = (payload: {
   reservationId: string;
   availableStock: number;
 }) => {
-  getIO().emit(SOCKET_EVENTS.RESERVATION_EXPIRED, payload);
+  if (!io) return;
+  io.emit(SOCKET_EVENTS.RESERVATION_EXPIRED, payload);
 };
 
 export const emitDropCreated = (payload: unknown) => {
-  getIO().emit(SOCKET_EVENTS.DROP_CREATED, payload);
+  if (!io) return;
+  io.emit(SOCKET_EVENTS.DROP_CREATED, payload);
 };
 
 export const emitActivityFeedUpdate = (payload: {
   dropId: string;
   latestPurchasers: Array<{ username: string; purchasedAt: Date }>;
 }) => {
-  getIO().emit(SOCKET_EVENTS.ACTIVITY_FEED_UPDATE, payload);
+  if (!io) return;
+  io.emit(SOCKET_EVENTS.ACTIVITY_FEED_UPDATE, payload);
 };
