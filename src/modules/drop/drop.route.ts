@@ -9,6 +9,9 @@ const router = Router();
 // GET /api/drops -> dashboard feed: live stock + top-3 recent purchasers per drop
 router.get('/', DropController.getAllDrops);
 
+// GET /api/drops/summary -> lighter homepage snapshot metrics
+router.get('/summary', DropController.getDashboardSummary);
+
 router.get('/:dropId', DropController.getDropById);
 
 // POST /api/drops -> "Merch Drop" creation API (no admin UI required)

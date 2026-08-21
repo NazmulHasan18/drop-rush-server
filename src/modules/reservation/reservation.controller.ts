@@ -33,4 +33,23 @@ const cancel = catchAsync(async (req, res) => {
   });
 });
 
-export const ReservationController = { reserve, cancel };
+const getMine = catchAsync(async (req, res) => {
+  if (!req.user) throw new AppError(401, 'Unauthorized');
+  const reservations = await ReservationService.getMyReservations(req.user.userId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Reservations retrieved successfully',
+    data: reservations.map((reservation) => ({
+      ...reservation,
+      expiresAt: reservation.expiresAt.toISOString(),
+      createdAt: reservation.createdAt.toISOString(),
+      updatedAt: reservation.updatedAt.toISOString(),
+      dropStartsAt: reservation.dropStartsAt.toISOString(),
+      dropPrice: Number(reservation.dropPrice),
+    })),
+  });
+});
+
+export const ReservationController = { reserve, cancel, getMine };

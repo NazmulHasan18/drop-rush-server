@@ -1,3 +1,4 @@
+import { QueryTypes } from 'sequelize';
 import { sequelize, Drop, Reservation } from '../../db/models/index.js';
 import { ReservationStatus } from '../../db/models/enums.js';
 import { AppError } from '../../utils/AppError.js';
@@ -10,6 +11,21 @@ interface DropStockRow {
   available_stock: number;
   total_stock: number;
   sold_count: number;
+}
+
+interface UserReservationRow {
+  id: string;
+  dropId: string;
+  userId: string;
+  status: ReservationStatus;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  dropName: string;
+  dropPrice: string;
+  dropTotalStock: number;
+  dropAvailableStock: number;
+  dropStartsAt: Date;
 }
 
 /**
@@ -131,6 +147,33 @@ const cancelReservation = async (reservationId: string, userId: string) => {
   return result.reservation;
 };
 
+const getMyReservations = async (userId: string): Promise<Array<UserReservationRow & { dropName: string }>> => {
+  const rows = await sequelize.query<UserReservationRow>(
+    `
+    SELECT
+      r.id,
+      r.drop_id       AS "dropId",
+      r.user_id       AS "userId",
+      r.status,
+      r.expires_at    AS "expiresAt",
+      r.created_at    AS "createdAt",
+      r.updated_at    AS "updatedAt",
+      d.name          AS "dropName",
+      d.price         AS "dropPrice",
+      d.total_stock   AS "dropTotalStock",
+      d.available_stock AS "dropAvailableStock",
+      d.starts_at     AS "dropStartsAt"
+    FROM reservations r
+    INNER JOIN drops d ON d.id = r.drop_id
+    WHERE r.user_id = :userId
+    ORDER BY r.created_at DESC;
+    `,
+    { replacements: { userId }, type: QueryTypes.SELECT },
+  );
+
+  return rows;
+};
+
 /**
  * Stock Recovery Mechanism: finds every ACTIVE reservation whose expiry has
  * passed, flips it to EXPIRED, and returns exactly 1 unit to the drop's
@@ -199,4 +242,4 @@ const expireDueReservations = async (): Promise<number> => {
   return expiredCount;
 };
 
-export const ReservationService = { reserveDrop, cancelReservation, expireDueReservations };
+export const ReservationService = { reserveDrop, cancelReservation, getMyReservations, expireDueReservations };

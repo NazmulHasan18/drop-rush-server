@@ -12,6 +12,16 @@ const getAllDrops = catchAsync(async (_req, res) => {
   });
 });
 
+const getDashboardSummary = catchAsync(async (_req, res) => {
+  const summary = await DropService.getDashboardSummary();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Drop summary retrieved successfully',
+    data: summary,
+  });
+});
+
 const getDropById = catchAsync(async (req, res) => {
   const drop = await DropService.getDropById(req.params.dropId as string);
   sendResponse(res, {
@@ -32,4 +42,4 @@ const createDrop = catchAsync(async (req, res) => {
   });
 });
 
-export const DropController = { getAllDrops, getDropById, createDrop };
+export const DropController = { getAllDrops, getDashboardSummary, getDropById, createDrop };

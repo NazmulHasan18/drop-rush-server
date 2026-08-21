@@ -7,6 +7,7 @@ import { reserveLimiter } from '../../middlewares/rateLimiter.js';
 
 const router = Router();
 
+router.get('/me', auth(), ReservationController.getMine);
 router.post('/', auth(), reserveLimiter, validateRequest(reserveDropSchema), ReservationController.reserve);
 router.post('/:reservationId/cancel', auth(), ReservationController.cancel);
 
