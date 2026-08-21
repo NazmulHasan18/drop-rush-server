@@ -39,4 +39,13 @@ const login = async (payload: LoginInput) => {
   return { token, user: { id: user.id, username: user.username } };
 };
 
-export const AuthService = { register, login };
+const getCurrentUser = async (userId: string) => {
+  const user = await User.findByPk(userId);
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+
+  return { id: user.id, username: user.username };
+};
+
+export const AuthService = { register, login, getCurrentUser };

@@ -1,8 +1,9 @@
-import { sequelize, Reservation, Purchase, User, Drop } from '../../db/models/index.js';
+import { sequelize, Reservation, Purchase, Drop } from '../../db/models/index.js';
 import { ReservationStatus } from '../../db/models/enums.js';
 import { AppError } from '../../utils/AppError.js';
 import { updateReturning } from '../../utils/rawQuery.js';
 import { emitStockUpdate, emitActivityFeedUpdate } from '../../sockets/index.js';
+import { QueryTypes } from 'sequelize';
 
 interface DropSoldRow {
   id: string;
@@ -10,6 +11,27 @@ interface DropSoldRow {
   total_stock: number;
   sold_count: number;
 }
+
+interface LatestPurchaser {
+  username: string;
+  purchasedAt: Date;
+}
+
+const getLatestPurchasers = async (dropId: string, limit = 3) => {
+  return sequelize.query<LatestPurchaser>(
+    `
+    SELECT
+      u.username AS username,
+      p.created_at AS "purchasedAt"
+    FROM purchases p
+    INNER JOIN users u ON u.id = p.user_id
+    WHERE p.drop_id = :dropId
+    ORDER BY p.created_at DESC
+    LIMIT :limit;
+    `,
+    { replacements: { dropId, limit }, type: QueryTypes.SELECT },
+  );
+};
 
 /**
  * Completes a purchase for a reservation the user currently holds.
@@ -74,12 +96,12 @@ const purchaseReservation = async (reservationId: string, userId: string) => {
       t,
     );
 
-    const buyer = await User.findByPk(userId, { transaction: t });
-
-    return { purchase, drop: updatedDrop, buyerUsername: buyer?.username ?? 'unknown' };
+    return { purchase, drop: updatedDrop };
   });
 
   if (result.drop) {
+    const latestPurchasers = await getLatestPurchasers(result.drop.id);
+
     emitStockUpdate({
       dropId: result.drop.id,
       availableStock: result.drop.available_stock,
@@ -89,7 +111,7 @@ const purchaseReservation = async (reservationId: string, userId: string) => {
 
     emitActivityFeedUpdate({
       dropId: result.drop.id,
-      latestPurchasers: [{ username: result.buyerUsername, purchasedAt: result.purchase.createdAt }],
+      latestPurchasers,
     });
   }
 

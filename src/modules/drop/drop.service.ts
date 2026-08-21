@@ -22,16 +22,7 @@ interface DropWithActivityRow {
   latestPurchasers: LatestPurchaser[];
 }
 
-/**
- * Fetches every drop plus its 3 most recent purchasers in a single round trip.
- *
- * Uses a LATERAL join so Postgres limits to 3 purchase rows *per drop* before
- * joining against users, instead of pulling every purchase for every drop and
- * filtering in application code (N+1 or over-fetch).
- */
-const getAllDropsWithActivity = async (): Promise<DropWithActivityRow[]> => {
-  const rows = await sequelize.query<DropWithActivityRow>(
-    `
+const dropWithActivitySelect = `
     SELECT
       d.id,
       d.name,
@@ -58,6 +49,19 @@ const getAllDropsWithActivity = async (): Promise<DropWithActivityRow[]> => {
       LIMIT 3
     ) p ON true
     LEFT JOIN users u ON u.id = p.user_id
+`;
+
+/**
+ * Fetches every drop plus its 3 most recent purchasers in a single round trip.
+ *
+ * Uses a LATERAL join so Postgres limits to 3 purchase rows *per drop* before
+ * joining against users, instead of pulling every purchase for every drop and
+ * filtering in application code (N+1 or over-fetch).
+ */
+const getAllDropsWithActivity = async (): Promise<DropWithActivityRow[]> => {
+  const rows = await sequelize.query<DropWithActivityRow>(
+    `
+    ${dropWithActivitySelect}
     GROUP BY d.id
     ORDER BY d.created_at DESC;
     `,
@@ -68,7 +72,16 @@ const getAllDropsWithActivity = async (): Promise<DropWithActivityRow[]> => {
 };
 
 const getDropById = async (dropId: string) => {
-  const drop = await Drop.findByPk(dropId);
+  const [drop] = await sequelize.query<DropWithActivityRow>(
+    `
+    ${dropWithActivitySelect}
+    WHERE d.id = :dropId
+    GROUP BY d.id
+    LIMIT 1;
+    `,
+    { replacements: { dropId }, type: QueryTypes.SELECT },
+  );
+
   if (!drop) {
     throw new AppError(404, 'Drop not found');
   }
